@@ -2,4 +2,12 @@
 require 'xtrn'
 require 'yaml'
 
-Xtrn::Directory.new(YAML.load(File.open('Externals', 'rb'){|f|f.read}), Xtrn::Executor.new).update!
+dir = Xtrn::Directory.new(YAML.load(File.open('Externals', 'rb', &:read)), Xtrn::Executor.new)
+dir.update!
+
+GITIGNORE = '.gitignore'
+
+gitignore_contents = File.file?(GITIGNORE) ? File.open(GITIGNORE, 'rb', &:read) : ''
+updated_gitignore_contents = dir.updated_gitignore(gitignore_contents)
+
+File.open(GITIGNORE, 'wb') {|f|f.write(updated_gitignore_contents)} unless updated_gitignore_contents == gitignore_contents
