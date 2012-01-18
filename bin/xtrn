@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+require 'xtrn'
+require 'yaml'
+
+Xtrn::Directory.new(YAML.load(File.open('Externals', 'rb'){|f|f.read}), Xtrn::Executor.new).update!
