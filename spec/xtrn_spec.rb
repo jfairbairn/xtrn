@@ -1,5 +1,6 @@
 require 'rspec'
 require 'xtrn'
+require File.dirname(__FILE__) + '/spec_helpers'
 describe Xtrn::Directory do
 
   let(:config) do
@@ -16,36 +17,63 @@ describe Xtrn::Directory do
 
   subject { Xtrn::Directory.new(config, executor) }
 
+  let(:svn) { Xtrn::SpecHelpers::SVNCommand.new }
+  let(:credentials) {nil}
+
   context 'updating' do
     before do
-      executor.should_receive(:exec).with("svn info #{config[0]['url']}") {
+      executor.should_receive(:exec) do |actual_svn_cmd|
+        actual_svn_cmd.should == svn.cmd('info').args(config[0]['url']).to_s
         <<EOF
 Ignore this one: Some value
 Last Changed Rev: 12345
 Some other stuff: Bobby
 EOF
-      }
+      end
     end
 
-    context 'when checkout path does not exist' do
-
-      it 'should check out the given svn directory path' do
-        File.should_receive(:"directory?").with(config[0]['path']).and_return(false)
-        executor.should_receive(:exec).with("svn checkout -r12345 #{config[0]['url']} #{config[0]['path']}")
+    shared_examples_for('svn with command') do |c|
+      it "should #{c} the given svn directory path" do
+        executor.should_receive(:exec) do |actual_svn_cmd|
+          actual_svn_cmd.should == svn.cmd(command).args("-r12345 #{config[0]['url']} #{config[0]['path']}").to_s
+        end
 
         subject.update!
       end
+
+      context 'with username and password' do
+        let(:credentials) {%w(testuser testpass).tap{|i|svn.credentials(*i)}}
+        it 'should pass username and password to svn if given' do
+          config[0]['username'] = credentials[0]
+          config[0]['password'] = credentials[1]
+          executor.should_receive(:exec) do |actual_svn_cmd|
+            actual_svn_cmd.should == svn.cmd(command).args("-r12345 #{config[0]['url']} #{config[0]['path']}").to_s
+          end
+          subject.update!
+        end
+      end
+    end
+
+
+    context 'when checkout path does not exist' do
+
+      before do
+        File.should_receive(:"directory?").with(config[0]['path']).and_return(false)
+      end
+      let(:command) {'checkout'}
+      include_examples('svn with command', 'checkout')
 
     end
 
     context 'when checkout path already exists' do
 
-      it 'should update the given svn directory path' do
+      before do
         File.should_receive(:"directory?").with(config[0]['path']).and_return(true)
-        executor.should_receive(:exec).with("svn update -r12345 #{config[0]['url']} #{config[0]['path']}")
-
-        subject.update!
       end
+
+      let(:command) {'update'}
+      include_examples('svn with command', 'update')
+
     end
   end
 
