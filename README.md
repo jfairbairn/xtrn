@@ -11,6 +11,8 @@ The format of the <tt>Externals</tt> file is as follows:
     - url: svn://svnhost/dir/to/external/codebase
       path: checkout/to/here
       type: svn
+      username: optional_username
+      password: optional_password
     - url: svn://svnhost2/another/thing
       path: this/one/goes/here
       type: svn
