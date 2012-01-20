@@ -10,16 +10,16 @@ module Xtrn
       @config.each do |entry|
         username = entry['username'] ? "--username '#{entry['username']}' " : ''
         password = entry['password'] ? "--password '#{entry['password']}' " : ''
-        # username = ''
+        standard_args = "--no-auth-cache"
 
-        x = @executor.exec("svn info #{username}#{password}#{entry['url']}")
+        x = @executor.exec("svn info #{username}#{password}#{standard_args} #{entry['url']}")
         rev = YAML.load(x)["Last Changed Rev"]
         cmd = if File.directory?(entry['path'])
           'update'
         else
           'checkout'
         end
-        @executor.exec("svn #{cmd} #{username}#{password}-r#{rev} #{entry['url']} #{entry['path']}")
+        @executor.exec("svn #{cmd} #{username}#{password}#{standard_args} -r#{rev} #{entry['url']} #{entry['path']}")
       end
 
       def updated_gitignore(original_gitignore)
