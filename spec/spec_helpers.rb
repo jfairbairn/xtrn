@@ -3,6 +3,7 @@ module Xtrn
     class SVNCommand
       def initialize()
         @username_and_password = ''
+        @standard_args = '--no-auth-cache'
       end
 
       def cmd(c)
@@ -23,7 +24,7 @@ module Xtrn
       end
 
       def to_s
-        "svn #{@cmd} #{@username_and_password}#{@args}"
+        "svn #{@cmd} #{@username_and_password}#{@standard_args} #{@args}"
       end
 
       def match(actual)
