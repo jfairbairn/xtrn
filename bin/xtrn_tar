@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+require 'xtrn'
+require 'yaml'
+require 'tempfile'
+
+tarball = ARGV[0]
+
+if !tarball
+  puts "Usage: xtrn_tar <tarball_name>"
+  exit 1
+end
+
+GITIGNORE = '.gitignore'
+
+# All this to get a tempdir
+tempfile = Tempfile.new('xtrn_tar')
+tempdir = tempfile.path
+tempfile.close
+tempfile.unlink
+
+oldwd = Dir.getwd
+FileUtils.rm_f(tempdir)
+FileUtils.mkdir_p(tempdir)
+
+FileUtils.cp 'Externals', tempdir
+FileUtils.cp GITIGNORE, tempdir if File.file? GITIGNORE
+
+Dir.chdir(tempdir)
+
+dir = Xtrn::Directory.new(YAML.load(File.open('Externals', 'rb', &:read)), Xtrn::Executor.new)
+dir.update!
+
+gitignore_contents = File.file?(GITIGNORE) ? File.open(GITIGNORE, 'rb', &:read) : ''
+updated_gitignore_contents = dir.updated_gitignore(gitignore_contents)
+
+File.open(GITIGNORE, 'wb') {|f|f.write(updated_gitignore_contents)} unless updated_gitignore_contents == gitignore_contents
+
+Dir.chdir(oldwd)
+filelist = ['.']
+filelist << '.gitignore' if File.file? GITIGNORE
+ret = system("tar czf #{tarball} -C #{tempdir} #{filelist.join(' ')}")
+FileUtils.rm_rf(tempdir)
+exit ret
