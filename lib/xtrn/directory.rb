@@ -10,7 +10,8 @@ module Xtrn
       @config.each do |entry|
         username = entry['username'] ? "--username '#{entry['username']}' " : ''
         password = entry['password'] ? "--password '#{entry['password']}' " : ''
-        standard_args = "--no-auth-cache"
+
+        standard_args = "--no-auth-cache" unless entry['cache_credentials']
 
         x = @executor.exec("svn info #{username}#{password}#{standard_args} #{entry['url']}")
         rev = YAML.load(x)["Last Changed Rev"]
