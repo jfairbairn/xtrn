@@ -1,3 +1,3 @@
 module Xtrn
-  VERSION = '0.1.6666'
+  VERSION = '0.1.6'
 end
